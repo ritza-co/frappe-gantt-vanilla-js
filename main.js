@@ -1,5 +1,5 @@
 import Gantt from "frappe-gantt";
-import { client } from "./utils/fetchWrapper.js";
+import "/node_modules/frappe-gantt/dist/frappe-gantt.css";
 import { months } from "./constants.js";
 import { createFormattedDateFromStr } from "./utils/dateFunctions.js";
 
@@ -8,25 +8,24 @@ const deleteForm = document.getElementById("delete-tasks");
 const tasksCheckboxContainers = document.querySelectorAll(
   ".tasks-checkbox-container"
 );
-const msgEl = document.querySelector(".delete-msg");
 
 let ganttChart;
 let tasks;
 
 async function fetchData() {
-  client("data/data.json").then(
-    (data) => {
-      tasks = data;
-      ganttChart = new Gantt("#gantt", tasks, {
-        bar_height: 25,
-        view_mode: "Week",
-        custom_popup_html: function (task) {
-          const start_day = task._start.getDate();
-          const start_month = months[task._start.getMonth()];
-          const end_day = task._end.getDate();
-          const end_month = months[task._end.getMonth()];
+  try {
+    const response = await fetch("data/data.json");
+    tasks = await response.json();
+    ganttChart = new Gantt("#gantt", tasks, {
+      bar_height: 25,
+      view_mode: "Week",
+      custom_popup_html: function (task) {
+        const start_day = task._start.getDate();
+        const start_month = months[task._start.getMonth()];
+        const end_day = task._end.getDate();
+        const end_month = months[task._end.getMonth()];
 
-          return `
+        return `
           <div class='details-container'>
             <h5>${task.name}</h5>
             <br>
@@ -35,23 +34,22 @@ async function fetchData() {
             <p>${task.progress}% completed!</p>
           </div>
         `;
-        },
-        on_date_change: function (task, start, end) {
-          updateDate(task, start, end);
-        },
-        on_progress_change: function (task, progress) {
-          updateProgress(task, progress);
-        },
-      });
-      showGantt();
-      addViewModes();
-      addTaskCheckboxes();
-    },
-    (error) => {
-      showErrorMsg();
-    },
-    hideLoader()
-  );
+      },
+      on_date_change: function (task, start, end) {
+        updateDate(task, start, end);
+      },
+      on_progress_change: function (task, progress) {
+        updateProgress(task, progress);
+      },
+    });
+    showGantt();
+    addViewModes();
+    addTaskCheckboxes();
+  } catch (error) {
+    showErrorMsg();
+  } finally {
+    hideLoader();
+  }
 }
 
 function hideLoader() {
@@ -93,12 +91,12 @@ function addTaskCheckboxes() {
       const div = document.createElement("div");
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
-      checkbox.id = task.id;
+      checkbox.id = `${i}-${task.id}`;
       checkbox.name = "task";
       checkbox.value = task.id;
 
       const label = document.createElement("label");
-      label.htmlFor = task.id;
+      label.htmlFor = `${i}-${task.id}`;
       label.appendChild(document.createTextNode(task.name));
       div.appendChild(checkbox);
       div.appendChild(label);
@@ -122,14 +120,16 @@ function addTask(e) {
   if (timeDiff <= 0) return;
 
   const depIds = [];
-  if (tasks.length === 1) {
+  if (tasks.length === 0 || !taskCheckboxes) {
+    // no existing tasks, no dependencies to add
+  } else if (tasks.length === 1) {
     if (taskCheckboxes.checked) {
-      depIds.push(taskCheckboxes.id);
+      depIds.push(taskCheckboxes.value);
     }
   } else {
     taskCheckboxes.forEach((dep) => {
       if (dep.checked) {
-        depIds.push(dep.id);
+        depIds.push(dep.value);
       }
     });
   }
@@ -146,7 +146,6 @@ function addTask(e) {
   tasks.push(newtask);
   ganttChart.refresh(tasks);
   addTaskCheckboxes();
-  msgEl.style.display = "none";
 }
 
 function deleteTasks(e) {
@@ -154,21 +153,16 @@ function deleteTasks(e) {
 
   const formElements = e.target.elements;
   const taskCheckboxes = formElements["task"];
-  if (tasks.length === 1) {
-    msgEl.style.display = "block";
-    return;
-  }
   const taskIds = [];
-  taskCheckboxes.forEach((task) => {
-    if (task.checked) {
-      taskIds.push(task.id);
-    }
-  });
-  if (taskIds.length === 0) return;
-  if (taskIds.length === tasks.length) {
-    msgEl.style.display = "block";
-    return;
+  if (!taskCheckboxes) return;
+  if (tasks.length === 1) {
+    if (taskCheckboxes.checked) taskIds.push(taskCheckboxes.value);
+  } else {
+    taskCheckboxes.forEach((task) => {
+      if (task.checked) taskIds.push(task.value);
+    });
   }
+  if (taskIds.length === 0) return;
 
   // remove deleted tasks
   const filteredTasks = tasks.filter((task) => !taskIds.includes(task.id));
@@ -191,7 +185,6 @@ function deleteTasks(e) {
   tasks = newTasks;
   ganttChart.refresh(tasks);
   addTaskCheckboxes();
-  msgEl.style.display = "none";
 }
 
 function updateDate(task, start, end) {

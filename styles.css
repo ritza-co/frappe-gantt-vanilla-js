@@ -167,14 +167,9 @@ fieldset legend {
 .tasks-checkbox-container div {
   display: flex;
   gap: 0.5rem;
+  width: 100%;
 }
 
 #delete-tasks button {
   background-color: red;
-}
-
-.delete-msg {
-  display: none;
-  padding-bottom: 0.5rem;
-  color: red;
 }
