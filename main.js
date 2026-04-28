@@ -91,12 +91,12 @@ function addTaskCheckboxes() {
       const div = document.createElement("div");
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
-      checkbox.id = task.id;
+      checkbox.id = `${i}-${task.id}`;
       checkbox.name = "task";
       checkbox.value = task.id;
 
       const label = document.createElement("label");
-      label.htmlFor = task.id;
+      label.htmlFor = `${i}-${task.id}`;
       label.appendChild(document.createTextNode(task.name));
       div.appendChild(checkbox);
       div.appendChild(label);
@@ -124,12 +124,12 @@ function addTask(e) {
     // no existing tasks, no dependencies to add
   } else if (tasks.length === 1) {
     if (taskCheckboxes.checked) {
-      depIds.push(taskCheckboxes.id);
+      depIds.push(taskCheckboxes.value);
     }
   } else {
     taskCheckboxes.forEach((dep) => {
       if (dep.checked) {
-        depIds.push(dep.id);
+        depIds.push(dep.value);
       }
     });
   }
@@ -156,7 +156,7 @@ function deleteTasks(e) {
   const taskIds = [];
   taskCheckboxes.forEach((task) => {
     if (task.checked) {
-      taskIds.push(task.id);
+      taskIds.push(task.value);
     }
   });
   if (taskIds.length === 0) return;
