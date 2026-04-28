@@ -8,7 +8,6 @@ const deleteForm = document.getElementById("delete-tasks");
 const tasksCheckboxContainers = document.querySelectorAll(
   ".tasks-checkbox-container"
 );
-const msgEl = document.querySelector(".delete-msg");
 
 let ganttChart;
 let tasks;
@@ -121,7 +120,9 @@ function addTask(e) {
   if (timeDiff <= 0) return;
 
   const depIds = [];
-  if (tasks.length === 1) {
+  if (tasks.length === 0 || !taskCheckboxes) {
+    // no existing tasks, no dependencies to add
+  } else if (tasks.length === 1) {
     if (taskCheckboxes.checked) {
       depIds.push(taskCheckboxes.id);
     }
@@ -145,7 +146,6 @@ function addTask(e) {
   tasks.push(newtask);
   ganttChart.refresh(tasks);
   addTaskCheckboxes();
-  msgEl.style.display = "none";
 }
 
 function deleteTasks(e) {
@@ -153,10 +153,6 @@ function deleteTasks(e) {
 
   const formElements = e.target.elements;
   const taskCheckboxes = formElements["task"];
-  if (tasks.length === 1) {
-    msgEl.style.display = "block";
-    return;
-  }
   const taskIds = [];
   taskCheckboxes.forEach((task) => {
     if (task.checked) {
@@ -164,10 +160,6 @@ function deleteTasks(e) {
     }
   });
   if (taskIds.length === 0) return;
-  if (taskIds.length === tasks.length) {
-    msgEl.style.display = "block";
-    return;
-  }
 
   // remove deleted tasks
   const filteredTasks = tasks.filter((task) => !taskIds.includes(task.id));
@@ -190,7 +182,6 @@ function deleteTasks(e) {
   tasks = newTasks;
   ganttChart.refresh(tasks);
   addTaskCheckboxes();
-  msgEl.style.display = "none";
 }
 
 function updateDate(task, start, end) {
