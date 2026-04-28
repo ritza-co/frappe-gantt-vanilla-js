@@ -1,4 +1,5 @@
 import Gantt from "frappe-gantt";
+import "/node_modules/frappe-gantt/dist/frappe-gantt.css";
 import { client } from "./utils/fetchWrapper.js";
 import { months } from "./constants.js";
 import { createFormattedDateFromStr } from "./utils/dateFunctions.js";
