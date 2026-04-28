@@ -154,11 +154,14 @@ function deleteTasks(e) {
   const formElements = e.target.elements;
   const taskCheckboxes = formElements["task"];
   const taskIds = [];
-  taskCheckboxes.forEach((task) => {
-    if (task.checked) {
-      taskIds.push(task.value);
-    }
-  });
+  if (!taskCheckboxes) return;
+  if (tasks.length === 1) {
+    if (taskCheckboxes.checked) taskIds.push(taskCheckboxes.value);
+  } else {
+    taskCheckboxes.forEach((task) => {
+      if (task.checked) taskIds.push(task.value);
+    });
+  }
   if (taskIds.length === 0) return;
 
   // remove deleted tasks
