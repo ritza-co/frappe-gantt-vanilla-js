@@ -1,6 +1,5 @@
 import Gantt from "frappe-gantt";
 import "/node_modules/frappe-gantt/dist/frappe-gantt.css";
-import { client } from "./utils/fetchWrapper.js";
 import { months } from "./constants.js";
 import { createFormattedDateFromStr } from "./utils/dateFunctions.js";
 
@@ -15,19 +14,19 @@ let ganttChart;
 let tasks;
 
 async function fetchData() {
-  client("data/data.json").then(
-    (data) => {
-      tasks = data;
-      ganttChart = new Gantt("#gantt", tasks, {
-        bar_height: 25,
-        view_mode: "Week",
-        custom_popup_html: function (task) {
-          const start_day = task._start.getDate();
-          const start_month = months[task._start.getMonth()];
-          const end_day = task._end.getDate();
-          const end_month = months[task._end.getMonth()];
+  try {
+    const response = await fetch("data/data.json");
+    tasks = await response.json();
+    ganttChart = new Gantt("#gantt", tasks, {
+      bar_height: 25,
+      view_mode: "Week",
+      custom_popup_html: function (task) {
+        const start_day = task._start.getDate();
+        const start_month = months[task._start.getMonth()];
+        const end_day = task._end.getDate();
+        const end_month = months[task._end.getMonth()];
 
-          return `
+        return `
           <div class='details-container'>
             <h5>${task.name}</h5>
             <br>
@@ -36,23 +35,22 @@ async function fetchData() {
             <p>${task.progress}% completed!</p>
           </div>
         `;
-        },
-        on_date_change: function (task, start, end) {
-          updateDate(task, start, end);
-        },
-        on_progress_change: function (task, progress) {
-          updateProgress(task, progress);
-        },
-      });
-      showGantt();
-      addViewModes();
-      addTaskCheckboxes();
-    },
-    (error) => {
-      showErrorMsg();
-    },
-    hideLoader()
-  );
+      },
+      on_date_change: function (task, start, end) {
+        updateDate(task, start, end);
+      },
+      on_progress_change: function (task, progress) {
+        updateProgress(task, progress);
+      },
+    });
+    showGantt();
+    addViewModes();
+    addTaskCheckboxes();
+  } catch (error) {
+    showErrorMsg();
+  } finally {
+    hideLoader();
+  }
 }
 
 function hideLoader() {
